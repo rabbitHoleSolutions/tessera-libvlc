@@ -1,0 +1,5 @@
+# Build trees and outputs: published as release assets, never committed.
+work/
+out/
+*.log
+__pycache__/

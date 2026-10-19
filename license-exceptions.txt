@@ -1,0 +1,15 @@
+# Linked sources that audit-linked-sources.py flags but that were reviewed and
+# are NOT GPL-only. One path per line, relative to the contrib source dir.
+# Every entry needs its reasoning.
+
+# Ron Mayer's FHT routine. Its header is a prose note ("kind of a derivative of
+# a routine I once authored and released under the GPL ... If it were up to me,
+# I'd say go do whatever you want with it") with no license grant of its own;
+# it is distributed as part of LAME's libmp3lame, which LAME licenses as a
+# whole under the LGPL. The credit it asks for is given in the notices.
+lame/libmp3lame/fft.c
+
+# Bison-generated parser. The GPL text in its header comes with Bison's
+# standard "special exception": a larger work containing the parser skeleton
+# may be distributed "under terms of your choice". glslang is BSD/MIT/Apache.
+glslang/glslang/MachineIndependent/glslang_tab.cpp

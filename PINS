@@ -1,0 +1,22 @@
+# Exact sources for the Tessera libVLC build. Sourced by build.sh.
+#
+# libvlcjni 794644a is the last commit that built 4.0.0-eap28, the version Tessera
+# shipped from Maven Central (the next commit only bumps the version to eap29).
+# VLC_HASH is the VLC_TESTED_HASH that commit's buildsystem/get-vlc.sh pins; the
+# six patches in libvlcjni/libvlc/patches are applied on top of it.
+LIBVLCJNI_REPO=https://code.videolan.org/videolan/libvlcjni.git
+LIBVLCJNI_HASH=794644aade3b6f2cfb81343d84bfc0a52a2fbc1e
+VLC_HASH=c84ef1eda4f14f8b57a5b266b51c843cf51ed28b
+
+# VideoLAN's own Android CI image at that VLC commit (extras/ci/gitlab-ci.yml,
+# VLC_ANDROID_IMAGE): NDK 29, Gradle, meson, protoc...
+BUILD_IMAGE=registry.videolan.org/vlc-debian-android:20260611083443
+
+# a = LGPL-2.1 + advertising clauses: contribs bootstrapped with
+# --disable-gpl --disable-gnuv3 --enable-ad-clauses.
+LICENSE_MODE=a
+ABI=arm64-v8a
+
+# Tessera's own revision of this build, appended to the upstream version.
+TESSERA_REV=t1
+VERSION=4.0.0-eap28-${TESSERA_REV}

@@ -40,6 +40,13 @@ All changes are applied by `build.sh` and included in the source tarball:
    of FFmpeg's portable C code.
 5. **Lua scripts removed** from the AAR. They are GPL-2.0+ and unused without
    the `lua` module.
+6. **`patches/vlc-aaudio-fresh-session-on-flush.patch`** (a bug fix, not a
+   licensing change). VLC's AAudio output closes and reopens its stream on
+   every flush (every seek), reusing the old audio session. On Horizon OS a
+   stream reopened on a reused session stays in STARTING for as long as the
+   previous stream had been playing, so video froze for seconds after every
+   seek. The patch reopens on a freshly allocated session and moves the
+   DynamicsProcessing volume effect across to it.
 
 Only the arm64-v8a ABI is built, because Quest headsets are arm64.
 

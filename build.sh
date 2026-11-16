@@ -31,6 +31,10 @@
 #     files with GPL headers (ac3dsp NEON, crc.S) even in LGPL mode; the patch
 #     drops them in favour of FFmpeg's portable C code.
 #  5. VLC's GPL Lua scripts are removed from the AAR.
+#  6. patches/vlc-aaudio-fresh-session-on-flush.patch (a fix, not licensing):
+#     the AAudio output reopens on a fresh audio session after a flush. On
+#     Horizon OS a reopened stream on a reused session stalls in STARTING for
+#     as long as the previous stream ran, freezing video after every seek.
 set -eu
 cd "$(dirname "$0")"
 . ./PINS
@@ -85,6 +89,7 @@ test "$(git -C "$J/vlc" rev-parse HEAD~6)" = "$VLC_HASH" ||
 # --- Tessera changes (see header) ------------------------------------------
 git -C "$J" checkout -q -- buildsystem/build-libvlc.sh
 git -C "$J/vlc" checkout -q -- contrib/src/ffmpeg/rules.mak
+git -C "$J/vlc" checkout -q -- modules/audio_output/android/aaudio.c
 
 # (2) GPL VLC modules → blacklist. No comment line inside the variable: the
 # script word-splits it into a regex.
@@ -108,11 +113,15 @@ sed -i '/h264_early_SAR.patch/a\	$(APPLY) $(SRC)/ffmpeg/ffmpeg-drop-gpl-aarch64.
     "$J/vlc/contrib/src/ffmpeg/rules.mak"
 grep -q 'ffmpeg-drop-gpl-aarch64.patch' "$J/vlc/contrib/src/ffmpeg/rules.mak" ||
     { echo "ffmpeg patch hook failed" >&2; exit 1; }
+
+# (6) AAudio fresh-session-on-flush fix, applied straight to the VLC tree.
+git -C "$J/vlc" apply "$ROOT/patches/vlc-aaudio-fresh-session-on-flush.patch"
 fi
 # Either way, refuse to build unless every Tessera change is in place.
 grep -q -- '--disable-zvbi' "$BUILD_LIBVLC" &&
     grep -q '^    lua$' "$BUILD_LIBVLC" &&
-    grep -q 'ffmpeg-drop-gpl-aarch64.patch' "$J/vlc/contrib/src/ffmpeg/rules.mak" ||
+    grep -q 'ffmpeg-drop-gpl-aarch64.patch' "$J/vlc/contrib/src/ffmpeg/rules.mak" &&
+    grep -q 'Tessera: reopen on a FRESH audio session' "$J/vlc/modules/audio_output/android/aaudio.c" ||
     { echo "Tessera LGPL changes missing from the sources" >&2; exit 1; }
 
 # --- build -----------------------------------------------------------------

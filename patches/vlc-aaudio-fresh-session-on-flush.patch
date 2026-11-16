@@ -1,0 +1,51 @@
+diff --git a/modules/audio_output/android/aaudio.c b/modules/audio_output/android/aaudio.c
+index 1ad7b679e8..6da60203e6 100644
+--- a/modules/audio_output/android/aaudio.c
++++ b/modules/audio_output/android/aaudio.c
+@@ -805,6 +805,26 @@ error:
+     sys->underrun_warn_bytes = 0;
+     sys->underrun_total_bytes = 0;
+ 
++    /* Tessera: reopen on a FRESH audio session, not the one the closed stream
++     * allocated. On Horizon OS (Quest, Nov 2026 builds) a stream reopened on a
++     * reused session stays in STARTING for exactly as long as the previous
++     * stream had been running, so after every seek the audio clock lags by
++     * that much and the video freezes to wait for it. A session we allocated
++     * ourselves carries nothing worth keeping except the DynamicsProcessing
++     * gain, which is recreated on the new session below. A caller-supplied
++     * session (audiotrack-session-id) is still honoured. */
++    const bool own_session =
++        var_InheritInteger(stream, "audiotrack-session-id") == 0;
++    if (own_session)
++    {
++        if (sys->dp != NULL)
++        {
++            DynamicsProcessing_Delete(stream, sys->dp);
++            sys->dp = NULL;
++        }
++        sys->cfg.session_id = AAUDIO_SESSION_ID_ALLOCATE;
++    }
++
+     int ret = OpenAAudioStream(stream);
+     if (ret != VLC_SUCCESS)
+     {
+@@ -812,6 +832,19 @@ error:
+         return;
+     }
+ 
++    if (own_session)
++    {
++        sys->cfg.session_id = vt.AAudioStream_getSessionId(sys->as);
++        if (sys->cfg.session_id != AAUDIO_SESSION_ID_NONE)
++            sys->dp = DynamicsProcessing_New(stream, sys->cfg.session_id);
++        if (sys->dp == NULL)
++            msg_Warn(stream, "failed to attach DynamicsProcessing after flush");
++        else if (DynamicsProcessing_SetVolume(stream, sys->dp,
++                                              sys->muted ? 0.0f : sys->volume)
++                 != VLC_SUCCESS)
++            msg_Warn(stream, "failed to restore the volume after flush");
++    }
++
+     int32_t new_rate = vt.AAudioStream_getSampleRate(sys->as);
+     assert(new_rate > 0);
+     if ((unsigned) new_rate != sys->fmt.i_rate)
